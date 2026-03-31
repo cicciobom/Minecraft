@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minicraft JS - Ultimate Edition</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #7EC0EE;
+            font-family: 'Courier New', Courier, monospace;
+            touch-action: none; user-select: none;
+        }
+
+        #game-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+
+        /* EFFETTO DANNO */
+        #damage-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 0, 0, 0.4); pointer-events: none; z-index: 50;
+            opacity: 0; transition: opacity 0.2s;
+        }
+
+        /* MIRINO A CROCE (+) */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
+        }
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute; background: white;
+            mix-blend-mode: difference;
+        }
+        #crosshair::before { width: 2px; height: 100%; left: 9px; }
+        #crosshair::after { height: 2px; width: 100%; top: 9px; }
+
+        /* HUD SUPERIORE */
+        #top-hud {
+            position: absolute; top: 15px; left: 50%;
+            transform: translateX(-50%); display: flex;
+            flex-direction: column; align-items: center; gap: 8px; z-index: 60;
+        }
+
+        #stats-bar {
+            display: flex; justify-content: space-between; width: 340px;
+            pointer-events: none; text-shadow: 2px 2px 0 #000;
+        }
+        .stat-group { display: flex; gap: 1px; letter-spacing: -3px; font-size: 18px; color: white; }
+
+        #inventory {
+            display: flex; gap: 4px; background: rgba(0,0,0,0.7);
+            padding: 6px; border: 3px solid #333; border-radius: 4px;
+        }
+        .slot {
+            width: 38px; height: 38px; border: 2px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; position: relative; background: rgba(255,255,255,0.1);
+            color: white; cursor: pointer;
+        }
+        .slot.active { border-color: #A4E57E; transform: scale(1.1); background: rgba(164, 229, 126, 0.2); }
+        .key-hint { position: absolute; bottom: -2px; right: 2px; font-size: 10px; color: #aaa; }
+
+        /* MOBILE UI */
+        .mobile-only { display: none; }
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-only { display: block; }
+        }
+
+        #joystick {
+            position: absolute; bottom: 30px; left: 30px; width: 110px; height: 110px;
+            background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+        }
+        #joystick-knob {
+            position: absolute; top: 30px; left: 30px; width: 50px; height: 50px;
+            background: rgba(255,255,255,0.4); border-radius: 50%;
+        }
+
+        #mobile-actions {
+            position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; align-items: flex-end;
+        }
+        .m-row { display: flex; gap: 15px; }
+        .m-btn {
+            width: 65px; height: 65px; border-radius: 50%; background: rgba(0,0,0,0.5);
+            border: 2px solid white; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px;
+        }
+        #m-jump { background: rgba(255, 255, 255, 0.2); }
+
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 20, 0.95); z-index: 100; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white; text-align: center;
+        }
+        #start-btn { 
+            padding: 15px 50px; font-size: 22px; background: #4CAF50; color: white; 
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container"></div>
+    <div id="damage-overlay"></div>
+    <div id="crosshair"></div>
+
+    <div id="top-hud">
+        <div id="stats-bar">
+            <div class="stat-group" id="health-bar"></div>
+            <div class="stat-group" id="food-bar"></div>
+        </div>
+        <div id="inventory">
+            <div class="slot active" data-type="1" style="background: #5CA932;"><span class="key-hint">1</span></div>
+            <div class="slot" data-type="2" style="background: #79553A;"><span class="key-hint">2</span></div>
+            <div class="slot" data-type="3" style="background: #6b4c3a;"><span class="key-hint">3</span></div>
+            <div class="slot" data-type="4" style="background: #337A20;"><span class="key-hint">4</span></div>
+            <div class="slot" data-type="5" style="background: #7D7D7D;"><span class="key-hint">5</span></div>
+            <div class="slot" data-type="6">🍎<span class="key-hint">6</span></div>
+            <div class="slot" data-type="7">⛏️<span class="key-hint">7</span></div>
+            <div class="slot" data-type="8">🪓<span class="key-hint">8</span></div>
+        </div>
+    </div>
+
+    <div id="joystick" class="mobile-only"><div id="joystick-knob"></div></div>
+    
+    <div id="mobile-actions" class="mobile-only">
+        <div class="m-btn" id="m-jump">▲</div>
+        <div class="m-row">
+            <div class="m-btn" id="m-break">⛏️</div>
+            <div class="m-btn" id="m-place">🧱</div>
+        </div>
+    </div>
+
+    <div id="start-screen">
+        <h1 style="color: #A4E57E;">MINICRAFT</h1>
+        <p>Fixed Infinite World & Top HUD</p>
+        <button id="start-btn">GIOCA</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+
+        // --- CORE ---
+        let scene, camera, renderer;
+        let yawObject, pitchObject, bobbingNode, handGroup;
+        let velocity = new THREE.Vector3();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = false, isMobile = false;
+
+        let targetYaw = 0, targetPitch = 0;
+        let currentYaw = 0, currentPitch = 0;
+
+        const PLAYER_HEIGHT = 1.6, PLAYER_RADIUS = 0.38;
+        const WALK_SPEED = 5.0;
+
+        // Definizione variabili mancanti per il mondo
+        const CHUNK_SIZE = 16;
+        const RENDER_DIST = 2;
+
+        const world = new Map();
+        const generatedChunks = new Set();
+        const blockMeshes = {};
+        let blockMaterials = {}, selectedType = 1;
+
+        let isMining = false, mineProgress = 0, mineTarget = null, requiredTime = 1;
+        const BLOCK_PROPS = { 
+            1: { h: 0.8, t: 'dirt' }, 
+            2: { h: 0.7, t: 'dirt' }, 
+            3: { h: 2.2, t: 'wood' }, 
+            4: { h: 0.3, t: 'leaf' }, 
+            5: { h: 4.0, t: 'stone' } 
+        };
+        const TOOL_SPEEDS = { 
+            7: { target: 'stone', s: 6 }, 
+            8: { target: 'wood', s: 5 } 
+        };
+        let crackMaterials = [], crackMesh;
+
+        let health = 10, food = 10, foodTimer = 0, lastVelY = 0;
+
+        init();
+        animate();
+
+        function init() {
+            isMobile = ('ontouchstart' in window);
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x7EC0EE);
+            scene.fog = new THREE.FogExp2(0x7EC0EE, 0.025);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
+            pitchObject = new THREE.Object3D(); pitchObject.add(camera);
+            bobbingNode = new THREE.Object3D(); bobbingNode.add(pitchObject);
+            yawObject = new THREE.Object3D(); yawObject.add(bobbingNode);
+            scene.add(yawObject);
+
+            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio > 1 ? 1.5 : 1);
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(50, 100, 50); scene.add(sun);
+
+            setupAssets();
+            setupMiningFX();
+            checkChunks(0, 0, true);
+            spawnPlayer();
+            setupControls();
+            updateHUD();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function setupAssets() {
+            const createTex = (c1, c2, grass) => {
+                const canvas = document.createElement('canvas'); canvas.width = 16; canvas.height = 16;
+                const ctx = canvas.getContext('2d'); ctx.fillStyle = c1; ctx.fillRect(0,0,16,16);
+                for(let i=0; i<40; i++) { ctx.fillStyle = c2; ctx.fillRect(Math.random()*16, Math.random()*16, 1, 1); }
+                if(grass) { ctx.fillStyle = '#5CA932'; ctx.fillRect(0,0,16,4); }
+                const tex = new THREE.CanvasTexture(canvas); tex.magFilter = THREE.NearestFilter; return tex;
+            };
+
+            const tG_S = createTex('#79553A', '#5E402A', true), tG_T = createTex('#5CA932', '#4A8E26', false);
+            const tD = createTex('#79553A', '#5E402A', false), tS = createTex('#7D7D7D', '#636363', false);
+            const tW_S = createTex('#5C4033', '#402B21', false), tW_T = createTex('#C19A6B', '#A48058', false);
+            const tL = createTex('#337A20', '#255917', false);
+
+            const m = (tex, trans) => new THREE.MeshLambertMaterial({map: tex, transparent: trans || false, opacity: trans ? 0.9 : 1});
+
+            blockMaterials = {
+                1: [m(tG_S), m(tG_S), m(tG_T), m(tD), m(tG_S), m(tG_S)],
+                2: m(tD), 3: [m(tW_S), m(tW_S), m(tW_T), m(tW_T), m(tW_S), m(tW_S)],
+                4: m(tL, true), 5: m(tS), 6: new THREE.MeshLambertMaterial({color: 0xcc2222})
+            };
+
+            for(let i=1; i<=5; i++) {
+                const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), blockMaterials[i], 50000);
+                inst.count = 0; scene.add(inst); blockMeshes[i] = inst;
+            }
+
+            handGroup = new THREE.Group(); handGroup.position.set(0.5, -0.4, -0.8);
+            pitchObject.add(handGroup);
+            updateHandVisual(1);
+
+            const hl = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01, 1.01, 1.01)), new THREE.LineBasicMaterial({color: 0, transparent: true, opacity: 0.4}));
+            scene.add(hl); window.blockHL = hl;
+        }
+
+        function setupMiningFX() {
+            for(let i=0; i<5; i++) {
+                const canv = document.createElement('canvas'); canv.width = 32; canv.height = 32;
+                const ctx = canv.getContext('2d'); ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 1.5;
+                if(i > 0) for(let j=0; j<i*10; j++) { ctx.beginPath(); let x=Math.random()*32, y=Math.random()*32; ctx.moveTo(x,y); ctx.lineTo(x+Math.random()*10-5, y+Math.random()*10-5); ctx.stroke(); }
+                const t = new THREE.CanvasTexture(canv); t.magFilter = THREE.NearestFilter;
+                crackMaterials.push(new THREE.MeshBasicMaterial({map:t, transparent:true, polygonOffset:true, polygonOffsetFactor:-1}));
+            }
+            crackMesh = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.02, 1.02), crackMaterials[0]);
+            crackMesh.visible = false; scene.add(crackMesh);
+        }
+
+        // --- WORLD ---
+        function setBlock(x,y,z,t) { world.set(`${x},${y},${z}`, t); }
+        function hasBlock(x,y,z) { return world.has(`${x},${y},${z}`); }
+        function getBlock(x,y,z) { return world.get(`${x},${y},${z}`); }
+
+        function checkChunks(px, pz, force) {
+            const cx = Math.floor(px/CHUNK_SIZE), cz = Math.floor(pz/CHUNK_SIZE);
+            if(force || cx !== window.lastCX || cz !== window.lastCZ) {
+                window.lastCX = cx; window.lastCZ = cz;
+                for(let x = cx-RENDER_DIST; x <= cx+RENDER_DIST; x++) {
+                    for(let z = cz-RENDER_DIST; z <= cz+RENDER_DIST; z++) {
+                        const key = `${x},${z}`;
+                        if(!generatedChunks.has(key)) {
+                            for(let lx=0; lx<CHUNK_SIZE; lx++) for(let lz=0; lz<CHUNK_SIZE; lz++) {
+                                let gx = x*CHUNK_SIZE+lx, gz = z*CHUNK_SIZE+lz;
+                                let h = Math.floor(Math.sin(gx*0.1)*Math.cos(gz*0.1)*4 + Math.sin((gx+gz)*0.04)*3);
+                                for(let y=h-3; y<=h; y++) setBlock(gx,y,gz, y===h?1:(y<h-2?5:2));
+                                if(Math.random()>0.99) {
+                                    const th = 4+Math.floor(Math.random()*2);
+                                    for(let i=0; i<th; i++) setBlock(gx,h+1+i,gz,3);
+                                    for(let ax=-2; ax<=2; ax++) for(let ay=th-2; ay<=th+1; ay++) for(let az=-2; az<=2; az++)
+                                        if(Math.abs(ax)+Math.abs(az)+(ay-th+1) <= 3 && !hasBlock(gx+ax,h+1+ay,gz+az)) setBlock(gx+ax,h+1+ay,gz+az,4);
+                                }
+                            }
+                            generatedChunks.add(key);
+                        }
+                    }
+                }
+                updateInstancedMeshes();
+            }
+        }
+
+        function updateInstancedMeshes() {
+            for(let i=1; i<=5; i++) blockMeshes[i].count = 0;
+            const dummy = new THREE.Object3D();
+            const minX = (window.lastCX-3)*16, maxX = (window.lastCX+3)*16, minZ = (window.lastCZ-3)*16, maxZ = (window.lastCZ+3)*16;
+            world.forEach((t, k) => {
+                const [x,y,z] = k.split(',').map(Number);
+                if(x>=minX && x<maxX && z>=minZ && z<maxZ) {
+                    const m = blockMeshes[t]; if(m && m.count < 50000) {
+                        dummy.position.set(x,y,z); dummy.updateMatrix(); m.setMatrixAt(m.count++, dummy.matrix);
+                    }
+                }
+            });
+            for(let i=1; i<=5; i++) blockMeshes[i].instanceMatrix.needsUpdate = true;
+        }
+
+        // --- PHYSICS ---
+        function checkCollision(pos) {
+            const r = PLAYER_RADIUS, h = PLAYER_HEIGHT;
+            const xMin = Math.floor(pos.x-r+0.5), xMax = Math.floor(pos.x+r+0.5);
+            const yMin = Math.floor(pos.y-h+0.5), yMax = Math.floor(pos.y+0.2);
+            const zMin = Math.floor(pos.z-r+0.5), zMax = Math.floor(pos.z+r+0.5);
+            for(let x=xMin; x<=xMax; x++) for(let y=yMin; y<=yMax; y++) for(let z=zMin; z<=zMax; z++)
+                if(hasBlock(x,y,z)) return true;
+            return false;
+        }
+
+        // --- CONTROLS ---
+        function setupControls() {
+            const ray = new THREE.Raycaster();
+            const getRayHit = () => {
+                ray.setFromCamera({x:0, y:0}, camera); ray.far = 6;
+                const its = ray.intersectObjects(Object.values(blockMeshes));
+                if(its.length > 0) {
+                    const hit = its[0];
+                    const p = hit.point.clone().sub(hit.face.normal.clone().multiplyScalar(0.5));
+                    return { x:Math.round(p.x), y:Math.round(p.y), z:Math.round(p.z), normal: hit.face.normal };
+                }
+                return null;
+            };
+
+            document.getElementById('start-btn').onclick = () => {
+                document.getElementById('start-screen').style.display='none';
+                if(!isMobile) document.body.requestPointerLock();
+            };
+
+            window.addEventListener('keydown', e => {
+                if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
+                if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
+                if(e.code==='Space') jump();
+                if(e.key >= '1' && e.key <= '8') selectSlot(parseInt(e.key));
+            });
+            window.addEventListener('keyup', e => {
+                if(e.code==='KeyW') moveForward=false; if(e.code==='KeyS') moveBackward=false;
+                if(e.code==='KeyA') moveLeft=false; if(e.code==='KeyD') moveRight=false;
+            });
+
+            window.addEventListener('mousemove', e => {
+                if(document.pointerLockElement === document.body) {
+                    targetYaw -= e.movementX * 0.0015;
+                    targetPitch = Math.max(-1.5, Math.min(1.5, targetPitch - e.movementY * 0.0015));
+                }
+            });
+
+            window.addEventListener('mousedown', e => {
+                if(document.pointerLockElement !== document.body && !isMobile) return;
+                if(e.button === 0) { isMining = true; mineProgress = 0; swing(); } 
+                else if(e.button === 2) placeBlock();
+            });
+            window.addEventListener('mouseup', e => { if(e.button === 0) stopMining(); });
+
+            // Mobile Actions
+            let tidLook = null, ltx, lty;
+            renderer.domElement.ontouchstart = e => {
+                if(e.target.closest('#top-hud') || e.target.closest('.m-btn')) return;
+                tidLook = e.changedTouches[0].identifier; ltx = e.changedTouches[0].clientX; lty = e.changedTouches[0].clientY;
+            };
+            renderer.domElement.ontouchmove = e => {
+                if(tidLook === null) return; e.preventDefault();
+                for(let t of e.changedTouches) if(t.identifier === tidLook) {
+                    targetYaw -= (t.clientX - ltx) * 0.005; targetPitch = Math.max(-1.5, Math.min(1.5, targetPitch - (t.clientY - lty) * 0.005));
+                    ltx = t.clientX; lty = t.clientY;
+                }
+            };
+            
+            document.getElementById('m-jump').onclick = (e) => { e.preventDefault(); jump(); };
+            document.getElementById('m-break').ontouchstart = (e) => { e.preventDefault(); isMining = true; mineProgress = 0; swing(); };
+            document.getElementById('m-break').ontouchend = (e) => { e.preventDefault(); stopMining(); };
+            document.getElementById('m-place').onclick = (e) => { e.preventDefault(); placeBlock(); };
+
+            const jKnob = document.getElementById('joystick-knob');
+            let tidJoy = null;
+            document.getElementById('joystick').ontouchstart = e => { e.preventDefault(); tidJoy = e.changedTouches[0].identifier; };
+            document.getElementById('joystick').ontouchmove = e => {
+                if(tidJoy === null) return;
+                for(let t of e.changedTouches) if(t.identifier === tidJoy) {
+                    let rect = document.getElementById('joystick').getBoundingClientRect();
+                    let dx = t.clientX - (rect.left+55), dy = t.clientY - (rect.top+55);
+                    let d = Math.sqrt(dx*dx+dy*dy); if(d>30) { dx=(dx/d)*30; dy=(dy/d)*30; }
+                    jKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                    moveForward = dy < -10; moveBackward = dy > 10; moveLeft = dx < -10; moveRight = dx > 10;
+                }
+            };
+            document.getElementById('joystick').ontouchend = () => { tidJoy=null; jKnob.style.transform=''; moveForward=moveBackward=moveLeft=moveRight=false; };
+
+            document.querySelectorAll('.slot').forEach(s => s.onclick = () => selectSlot(parseInt(s.dataset.type)));
+
+            window.jump = () => { if(canJump) { velocity.y = 8.5; canJump = false; } };
+            window.stopMining = () => { isMining = false; mineTarget = null; crackMesh.visible = false; };
+            window.placeBlock = () => {
+                if(selectedType === 6) { if(food < 10) { food++; updateHUD(); swing(); } return; }
+                const hit = getRayHit();
+                if(hit && selectedType <= 5) {
+                    const nx = hit.x + hit.normal.x, ny = hit.y + hit.normal.y, nz = hit.z + hit.normal.z;
+                    if(!checkCollision({x:nx, y:ny, z:nz})) { setBlock(nx,ny,nz, selectedType); updateInstancedMeshes(); swing(); }
+                }
+            };
+            window.getRayHit = getRayHit;
+        }
+
+        function selectSlot(id) {
+            selectedType = id; document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+            const s = document.querySelector(`.slot[data-type="${id}"]`); if(s) s.classList.add('active');
+            updateHandVisual(id);
+        }
+
+        function swing() { if(!window.isSwinging) { window.isSwinging = true; window.swingP = 0; } }
+
+        function updateHandVisual(type) {
+            while(handGroup.children.length > 0) handGroup.remove(handGroup.children[0]);
+            
+            if(type <= 5) { // Blocco
+                handGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.35), blockMaterials[type]));
+            } else if(type === 6) { // Mela
+                handGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), blockMaterials[6]));
+            } else if(type === 7 || type === 8) { // Strumenti 3D
+                const handleMat = new THREE.MeshLambertMaterial({color: 0x5C4033});
+                const headMat = new THREE.MeshLambertMaterial({color: 0x777777});
+                
+                // Manico
+                const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), handleMat);
+                handle.position.y = -0.1;
+                handGroup.add(handle);
+                
+                if(type === 7) { // Piccone
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.08), headMat);
+                    head.position.y = 0.15;
+                    handGroup.add(head);
+                } else { // Ascia
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.22, 0.06), headMat);
+                    head.position.set(0.08, 0.1, 0);
+                    handGroup.add(head);
+                }
+            }
+        }
+
+        // --- ANIMATION ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            const dt = Math.min((time - (window.lt || time))/1000, 0.1); window.lt = time;
+
+            if(document.getElementById('start-screen').style.display === 'none') {
+                currentYaw += (targetYaw - currentYaw) * 15 * dt;
+                currentPitch += (targetPitch - currentPitch) * 15 * dt;
+                yawObject.rotation.y = currentYaw;
+                pitchObject.rotation.x = currentPitch;
+
+                checkChunks(yawObject.position.x, yawObject.position.z);
+                
+                if(window.isSwinging) {
+                    window.swingP += dt * 25;
+                    if(window.swingP >= Math.PI) { window.isSwinging = false; handGroup.rotation.x = 0; }
+                    else { handGroup.rotation.x = -Math.sin(window.swingP)*1.2; handGroup.position.z = -0.8 - Math.sin(window.swingP)*0.3; }
+                }
+
+                if(isMining) {
+                    const hit = window.getRayHit();
+                    if(hit) {
+                        const id = `${hit.x},${hit.y},${hit.z}`;
+                        if(mineTarget !== id) {
+                            mineTarget = id; mineProgress = 0;
+                            const bType = getBlock(hit.x, hit.y, hit.z);
+                            let sMult = 1; 
+                            if(TOOL_SPEEDS[selectedType] && TOOL_SPEEDS[selectedType].target === BLOCK_PROPS[bType].t) sMult = TOOL_SPEEDS[selectedType].s;
+                            requiredTime = BLOCK_PROPS[bType].h / sMult;
+                            crackMesh.position.set(hit.x, hit.y, hit.z); crackMesh.visible = true;
+                        }
+                        mineProgress += dt; if(!window.isSwinging) swing();
+                        const s = Math.floor((mineProgress/requiredTime)*5);
+                        if(s>=0 && s<=4) crackMesh.material = crackMaterials[s];
+                        if(mineProgress >= requiredTime) { world.delete(id); updateInstancedMeshes(); window.stopMining(); isMining=true; }
+                    } else window.stopMining();
+                }
+
+                const looked = window.getRayHit();
+                if(looked && selectedType <= 5 && !isMining) { window.blockHL.position.set(looked.x, looked.y, looked.z); window.blockHL.visible = true; }
+                else window.blockHL.visible = false;
+
+                let dir = new THREE.Vector3(Number(moveRight)-Number(moveLeft), 0, Number(moveBackward)-Number(moveForward)).normalize();
+                dir.applyEuler(new THREE.Euler(0, currentYaw, 0));
+                velocity.x += (dir.x * WALK_SPEED - velocity.x) * 15 * dt;
+                velocity.z += (dir.z * WALK_SPEED - velocity.z) * 15 * dt;
+                velocity.y -= 26 * dt; 
+
+                const p = yawObject.position;
+                p.x += velocity.x * dt; if(checkCollision(p)) { p.x -= velocity.x * dt; velocity.x = 0; }
+                p.z += velocity.z * dt; if(checkCollision(p)) { p.z -= velocity.z * dt; velocity.z = 0; }
+                p.y += velocity.y * dt;
+                if(checkCollision(p)) {
+                    p.y -= velocity.y * dt;
+                    if(velocity.y < 0) {
+                        canJump = true;
+                        if(lastVelY < -15) takeDamage(Math.floor(Math.abs(lastVelY+15)/2));
+                    }
+                    velocity.y = 0;
+                } else canJump = false;
+                lastVelY = velocity.y;
+                if(p.y < -30) { spawnPlayer(); takeDamage(2); velocity.set(0,0,0); }
+
+                if(dir.lengthSq()>0.1 && canJump) foodTimer += dt;
+                if(foodTimer > 20) { food = Math.max(0, food-1); foodTimer = 0; updateHUD(); }
+            }
+            renderer.render(scene, camera);
+        }
+
+        function updateHUD() {
+            let hp = ''; for(let i=0; i<10; i++) hp += (i < health) ? '❤️' : '🖤';
+            document.getElementById('health-bar').innerHTML = hp;
+            let fd = ''; for(let i=0; i<10; i++) fd += (i < food) ? '🍖' : '🦴';
+            document.getElementById('food-bar').innerHTML = fd;
+        }
+
+        function spawnPlayer() {
+            for(let y=40; y>-10; y--) if(hasBlock(0,y,0)) { yawObject.position.set(0, y+1.5+PLAYER_HEIGHT, 0); return; }
+            yawObject.position.set(0, 15, 0);
+        }
+    </script>
+</body>
+</html>

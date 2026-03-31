@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minicraft JS - Gemini AI Edition</title>
+    <title>Minicraft JS - Fixed & Gemini Edition</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -20,7 +20,7 @@
             opacity: 0; transition: opacity 0.2s;
         }
 
-        /* MIRINO A + */
+        /* MIRINO */
         #crosshair {
             position: absolute; top: 50%; left: 50%; width: 24px; height: 24px;
             transform: translate(-50%, -50%); pointer-events: none; z-index: 10;
@@ -64,7 +64,7 @@
         }
         .key-hint { position: absolute; bottom: 1px; left: 2px; font-size: 9px; color: #999; }
 
-        /* COLORI HUD PER I BLOCCHI */
+        /* BLOCCHI HUD */
         .block-preview { border-radius: 2px; width: 30px; height: 30px; }
         .color-1 { background: #5CA932; }
         .color-2 { background: #79553A; }
@@ -72,21 +72,21 @@
         .color-4 { background: #337A20; }
         .color-5 { background: #7D7D7D; }
 
-        /* INTERFACCIA CHAT GEMINI */
+        /* CHAT AI */
         #ai-chat-overlay {
-            position: absolute; bottom: 100px; left: 20px; width: 300px;
-            background: rgba(0,0,0,0.8); border: 2px solid #444; border-radius: 8px;
+            position: absolute; bottom: 100px; left: 20px; width: 320px;
+            background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 8px;
             display: none; flex-direction: column; z-index: 100;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        #chat-header { background: #333; padding: 10px; font-size: 12px; color: #A4E57E; border-bottom: 1px solid #444; display: flex; justify-content: space-between; }
-        #chat-messages { height: 180px; overflow-y: auto; padding: 10px; font-size: 13px; color: #eee; display: flex; flex-direction: column; gap: 8px; }
-        #chat-input-area { display: flex; padding: 5px; background: #222; border-top: 1px solid #444; border-radius: 0 0 8px 8px; }
-        #chat-input { flex: 1; background: transparent; border: none; color: white; padding: 8px; outline: none; font-family: inherit; }
-        #chat-send { background: #4CAF50; border: none; color: white; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #chat-header { background: #222; padding: 10px; font-size: 12px; color: #A4E57E; border-bottom: 1px solid #444; display: flex; justify-content: space-between; font-weight: bold; }
+        #chat-messages { height: 200px; overflow-y: auto; padding: 10px; font-size: 13px; color: #eee; display: flex; flex-direction: column; gap: 8px; }
+        #chat-input-area { display: flex; padding: 5px; background: #111; border-top: 1px solid #444; border-radius: 0 0 8px 8px; }
+        #chat-input { flex: 1; background: transparent; border: none; color: white; padding: 10px; outline: none; font-family: inherit; }
         .msg-user { color: #A4E57E; text-align: right; }
-        .msg-bot { color: #7EC0EE; text-align: left; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px; }
+        .msg-bot { color: #7EC0EE; text-align: left; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 4px; line-height: 1.4; }
 
+        /* MOBILE */
         #mobile-controls { display: none; }
         .is-mobile #mobile-controls { display: block; }
         #joystick {
@@ -105,28 +105,20 @@
             width: 65px; height: 65px; border-radius: 50%; background: rgba(0,0,0,0.5);
             border: 2px solid white; color: white; display: flex; justify-content: center; align-items: center; font-size: 26px;
         }
-        #m-chat-toggle { background: rgba(164, 229, 126, 0.4); border-color: #A4E57E; }
 
+        /* MENU */
         .overlay-menu {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 15, 20, 0.98); z-index: 100;
+            background: rgba(15, 15, 20, 0.98); z-index: 200;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             color: white; text-align: center; backdrop-filter: blur(10px);
         }
         .menu-btn {
             padding: 18px 60px; font-size: 20px; background: #333; color: white;
             border: 2px solid #555; border-radius: 6px; cursor: pointer;
-            margin: 12px; width: 320px; text-transform: uppercase; font-weight: bold;
-            transition: 0.2s;
+            margin: 12px; width: 300px; text-transform: uppercase; font-weight: bold;
         }
-        .menu-btn:hover { background: #444; border-color: #A4E57E; }
         .menu-btn.primary { background: #4CAF50; border-color: #2E7D32; }
-
-        #start-screen { display: flex; }
-        #pause-menu { display: none; }
-        
-        .loading-dots:after { content: '...'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: white; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 white, .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 white, .5em 0 0 white; } }
     </style>
 </head>
 <body>
@@ -135,6 +127,7 @@
     <div id="damage-overlay"></div>
     <div id="crosshair"></div>
 
+    <!-- HUD -->
     <div id="top-hud">
         <div id="stats-bar">
             <div class="stat-group" id="health-bar"></div>
@@ -143,26 +136,26 @@
         <div id="inventory"></div>
     </div>
 
-    <!-- CHAT AI ASSISTANT -->
+    <!-- AI CHAT -->
     <div id="ai-chat-overlay">
         <div id="chat-header">
-            <span>✨ SPIRITO DEL MONDO (AI)</span>
-            <span style="cursor:pointer" onclick="document.getElementById('ai-chat-overlay').style.display='none'">✕</span>
+            <span>✨ SPIRITO DEL MONDO</span>
+            <span style="cursor:pointer" id="close-chat">✕</span>
         </div>
         <div id="chat-messages">
-            <div class="msg-bot">Benvenuto, viaggiatore. Chiedimi qualunque cosa su questo mondo infinito o chiedimi suggerimenti ✨.</div>
+            <div class="msg-bot">Saluti, costruttore. Come posso assisterti oggi? ✨</div>
         </div>
         <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Scrivi un messaggio...">
-            <button id="chat-send">✨</button>
+            <input type="text" id="chat-input" placeholder="Parla con Gemini...">
         </div>
     </div>
 
+    <!-- MOBILE UI -->
     <div id="mobile-controls">
         <div id="joystick"><div id="joystick-knob"></div></div>
         <div id="mobile-actions">
             <div class="m-row">
-                <div class="m-btn" id="m-chat-toggle">✨</div>
+                <div class="m-btn" id="m-chat">💬</div>
                 <div class="m-btn" id="m-shift">S</div>
                 <div class="m-btn" id="m-jump">▲</div>
             </div>
@@ -173,66 +166,59 @@
         </div>
     </div>
 
+    <!-- MENUS -->
     <div id="start-screen" class="overlay-menu">
-        <h1 style="color: #A4E57E; font-size: 60px; margin-bottom: 10px;">MINICRAFT AI</h1>
-        <p style="opacity: 0.8; margin-bottom: 40px;">Esplora • Costruisci • Chiedi a Gemini ✨</p>
+        <h1 style="color: #A4E57E; font-size: 60px;">MINICRAFT AI</h1>
+        <p style="opacity: 0.8; margin-bottom: 40px;">Mondo Infinito • Assistenza AI • Fixed Movement</p>
         <button id="start-btn" class="menu-btn primary">Inizia Partita</button>
     </div>
 
-    <div id="pause-menu" class="overlay-menu">
-        <h2 style="font-size: 40px; margin-bottom: 40px;">PAUSA</h2>
+    <div id="pause-menu" class="overlay-menu" style="display:none">
+        <h2 style="font-size: 40px; margin-bottom: 40px;">GIOCO IN PAUSA</h2>
         <button id="resume-btn" class="menu-btn primary">Torna al Gioco</button>
-        <button id="main-menu-btn" class="menu-btn">Esci al Menu</button>
+        <button id="main-menu-btn" class="menu-btn">Menu Principale</button>
     </div>
 
     <script type="module">
         import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
-        // --- GEMINI API INTEGRATION ---
-        const apiKey = ""; // Injected at runtime
+        // --- GEMINI API ---
+        const apiKey = ""; 
         const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
 
         async function callGemini(userQuery) {
-            const systemPrompt = "Sei lo Spirito del Mondo di Minicraft, un'entità guida mistica e saggia. Il giocatore è in un mondo infinito di voxel. Rispondi in italiano. Aiuta il giocatore con consigli di costruzione, sopravvivenza o curiosità sui blocchi (Erba, Terra, Legno, Foglie, Pietra). Sii conciso (max 3 frasi). Usa un tono leggermente magico.";
+            const systemPrompt = "Sei lo Spirito del Mondo di Minicraft. Il giocatore è in un mondo infinito. Rispondi in italiano in modo breve (max 3 frasi) e magico. Aiuta con consigli di scavo o costruzione.";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-            
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] }
             };
-
-            let delay = 1000;
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!response.ok) throw new Error("API Limit");
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Lo spirito è silenzioso al momento...";
-                } catch (error) {
-                    if (i === 4) return "La connessione con il regno astrale di Gemini è interrotta. Riprova più tardi.";
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    delay *= 2;
-                }
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "Lo spirito è stanco...";
+            } catch (error) {
+                return "La connessione con il regno astrale è debole.";
             }
         }
 
-        // --- CONFIGURAZIONE GIOCO ---
+        // --- VARIABILI GIOCO ---
         let scene, camera, renderer;
         let yawObject, pitchObject, bobbingNode, handGroup;
         let velocity = new THREE.Vector3();
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let canJump = false, isTouchDevice = false, isShifting = false;
-        let gamePaused = true, lastUnlockTime = 0;
+        let gamePaused = true, isChatting = false;
 
         let targetYaw = 0, targetPitch = 0;
         let currentYaw = 0, currentPitch = 0;
 
         const PLAYER_HEIGHT = 1.6, PLAYER_RADIUS = 0.35;
-        const WALK_SPEED = 5.0, SHIFT_SPEED = 2.0;
+        const WALK_SPEED = 5.2, SHIFT_SPEED = 2.2;
         const CHUNK_SIZE = 16, RENDER_DIST = 2;
 
         const world = new Map();
@@ -285,38 +271,37 @@
             document.getElementById('game-container').appendChild(renderer.domElement);
 
             const ambient = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambient);
-            const sun = new THREE.DirectionalLight(0xffffff, 0.85); sun.position.set(50, 150, 50); 
-            sun.castShadow = true; 
-            sun.shadow.camera.left = -50; sun.shadow.camera.right = 50;
-            sun.shadow.camera.top = 50; sun.shadow.camera.bottom = -50;
-            scene.add(sun);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(50, 150, 50); 
+            sun.castShadow = true; scene.add(sun);
 
             setupAssets();
             setupMiningFX();
             checkChunks(0, 0, true);
             spawnPlayer();
             setupControls();
-            setupAIChat();
             renderInventoryUI();
             updateHUD();
 
             window.addEventListener('resize', onResize);
+            
+            // RESET INPUT SE FINESTRA PERDE FOCUS (Previene bug movimento bloccato)
+            window.addEventListener('blur', () => {
+                moveForward = moveBackward = moveLeft = moveRight = isShifting = false;
+            });
         }
 
         function setupAssets() {
             const createTex = (c1, c2, grass) => {
                 const canvas = document.createElement('canvas'); canvas.width = 16; canvas.height = 16;
                 const ctx = canvas.getContext('2d'); ctx.fillStyle = c1; ctx.fillRect(0,0,16,16);
-                for(let i=0; i<30; i++) { ctx.fillStyle = c2; ctx.fillRect(Math.random()*16, Math.random()*16, 1, 1); }
+                for(let i=0; i<25; i++) { ctx.fillStyle = c2; ctx.fillRect(Math.random()*16, Math.random()*16, 1, 1); }
                 if(grass) { ctx.fillStyle = '#5CA932'; ctx.fillRect(0,0,16,4); }
                 const tex = new THREE.CanvasTexture(canvas); tex.magFilter = THREE.NearestFilter; return tex;
             };
-
             const tG_S = createTex('#79553A', '#5E402A', true), tG_T = createTex('#5CA932', '#4A8E26', false);
             const tD = createTex('#79553A', '#5E402A', false), tS = createTex('#7D7D7D', '#636363', false);
             const tW_S = createTex('#5C4033', '#402B21', false), tW_T = createTex('#C19A6B', '#A48058', false);
             const tL = createTex('#337A20', '#255917', false);
-
             const m = (tex, trans) => new THREE.MeshLambertMaterial({map: tex, transparent: trans || false, opacity: trans ? 0.85 : 1});
 
             blockMaterials = {
@@ -335,8 +320,8 @@
             pitchObject.add(handGroup);
             updateHandVisual(inventory[selectedSlotIndex].type);
 
-            const hl = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01, 1.01, 1.01)), new THREE.LineBasicMaterial({color: 0, transparent: true, opacity: 0.4}));
-            scene.add(hl); window.blockHL = hl;
+            window.blockHL = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.01, 1.01, 1.01)), new THREE.LineBasicMaterial({color: 0, transparent: true, opacity: 0.4}));
+            scene.add(window.blockHL);
         }
 
         function setupMiningFX() {
@@ -351,7 +336,7 @@
             crackMesh.visible = false; scene.add(crackMesh);
         }
 
-        // --- WORLD GEN ---
+        // --- WORLD ---
         function setBlock(x,y,z,t) { world.set(`${x},${y},${z}`, t); }
         function hasBlock(x,y,z) { return world.has(`${x},${y},${z}`); }
         function getBlock(x,y,z) { return world.get(`${x},${y},${z}`); }
@@ -366,9 +351,9 @@
                         if(!generatedChunks.has(key)) {
                             for(let lx=0; lx<CHUNK_SIZE; lx++) for(let lz=0; lz<CHUNK_SIZE; lz++) {
                                 let gx = x*CHUNK_SIZE+lx, gz = z*CHUNK_SIZE+lz;
-                                let h = Math.floor(Math.sin(gx*0.08)*Math.cos(gz*0.08)*5 + Math.sin((gx+gz)*0.03)*4);
+                                let h = Math.floor(Math.sin(gx*0.1)*Math.cos(gz*0.1)*4 + Math.sin((gx+gz)*0.04)*3);
                                 for(let y=h-3; y<=h; y++) setBlock(gx,y,gz, y===h?1:(y<h-2?5:2));
-                                if(Math.random()>0.992) {
+                                if(Math.random()>0.99) {
                                     const th = 4+Math.floor(Math.random()*2);
                                     for(let i=0; i<th; i++) setBlock(gx,h+1+i,gz,3);
                                     for(let ax=-2; ax<=2; ax++) for(let ay=th-2; ay<=th+1; ay++) for(let az=-2; az<=2; az++)
@@ -379,11 +364,11 @@
                         }
                     }
                 }
-                updateInstancedMeshes();
+                updateMeshes();
             }
         }
 
-        function updateInstancedMeshes() {
+        function updateMeshes() {
             for(let i=1; i<=5; i++) blockMeshes[i].count = 0;
             const dummy = new THREE.Object3D();
             const minX = (window.lastCX-3)*16, maxX = (window.lastCX+3)*16, minZ = (window.lastCZ-3)*16, maxZ = (window.lastCZ+3)*16;
@@ -408,45 +393,30 @@
         }
 
         function handleDropsPickup() {
-            const playerPos = yawObject.position.clone();
-            playerPos.y -= 1.0;
+            const playerPos = yawObject.position.clone(); playerPos.y -= 1.0;
             for (let i = floatingDrops.length - 1; i >= 0; i--) {
                 const drop = floatingDrops[i];
                 drop.mesh.rotation.y += 0.05;
                 drop.mesh.position.y += Math.sin(Date.now() * 0.005) * 0.001;
-                const dist = playerPos.distanceTo(drop.mesh.position);
-                if (dist < 1.35) {
+                if (playerPos.distanceTo(drop.mesh.position) < 1.35) {
                     if (addToInventory(drop.type)) {
-                        scene.remove(drop.mesh);
-                        floatingDrops.splice(i, 1);
-                        renderInventoryUI();
+                        scene.remove(drop.mesh); floatingDrops.splice(i, 1); renderInventoryUI();
                     }
                 }
             }
         }
 
         function addToInventory(type) {
-            for (let item of inventory) {
-                if (item.type === type && item.count < 64) {
-                    item.count++;
-                    return true;
-                }
-            }
-            for (let i = 0; i < 5; i++) {
-                if (inventory[i].type === null) {
-                    inventory[i].type = type;
-                    inventory[i].count = 1;
-                    return true;
-                }
-            }
+            for (let item of inventory) if (item.type === type && item.count < 64) { item.count++; return true; }
+            for (let i = 0; i < 5; i++) if (inventory[i].type === null) { inventory[i].type = type; inventory[i].count = 1; return true; }
             return false;
         }
 
-        // --- CONTROLS ---
+        // --- CONTROLLI ---
         function setupControls() {
             const ray = new THREE.Raycaster();
             const getRayHit = () => {
-                ray.setFromCamera({x:0, y:0}, camera); ray.far = 5;
+                ray.setFromCamera({x:0, y:0}, camera); ray.far = 5.5;
                 const its = ray.intersectObjects(Object.values(blockMeshes));
                 if(its.length > 0) {
                     const hit = its[0];
@@ -455,26 +425,34 @@
                 return null;
             };
 
-            const enterGame = () => {
-                gamePaused = false;
-                document.getElementById('start-screen').style.display='none';
-                document.getElementById('pause-menu').style.display='none';
-                if(!isTouchDevice) document.body.requestPointerLock();
+            const toggleMenus = (paused) => {
+                gamePaused = paused;
+                document.getElementById('pause-menu').style.display = paused ? 'flex' : 'none';
+                if (!paused) {
+                    moveForward = moveBackward = moveLeft = moveRight = false;
+                    if (!isTouchDevice) document.body.requestPointerLock();
+                }
             };
 
-            document.getElementById('start-btn').onclick = enterGame;
-            document.getElementById('resume-btn').onclick = enterGame;
+            document.getElementById('start-btn').onclick = () => {
+                document.getElementById('start-screen').style.display='none';
+                toggleMenus(false);
+            };
+            document.getElementById('resume-btn').onclick = () => toggleMenus(false);
             document.getElementById('main-menu-btn').onclick = () => location.reload();
 
             document.addEventListener('pointerlockchange', () => {
-                if (document.pointerLockElement !== document.body && !gamePaused && !isTouchDevice) {
-                    document.getElementById('pause-menu').style.display = 'flex';
-                    gamePaused = true;
+                if (document.pointerLockElement !== document.body && !gamePaused && !isTouchDevice && !isChatting) {
+                    toggleMenus(true);
                 }
             });
 
+            // TASTIERA
             window.addEventListener('keydown', e => {
+                if(isChatting) return;
+                if(e.key.toLowerCase() === 't') { toggleChat(true); return; }
                 if(gamePaused) return;
+                
                 if(e.code==='KeyW') moveForward=true; if(e.code==='KeyS') moveBackward=true;
                 if(e.code==='KeyA') moveLeft=true; if(e.code==='KeyD') moveRight=true;
                 if(e.code==='Space') jump();
@@ -487,39 +465,68 @@
                 if(e.code==='ShiftLeft') isShifting = false;
             });
 
+            // ROTELLINA
             window.addEventListener('wheel', e => {
-                if(gamePaused) return;
+                if(gamePaused || isChatting) return;
                 let newIdx = selectedSlotIndex + (e.deltaY > 0 ? 1 : -1);
                 if (newIdx > 7) newIdx = 0; if (newIdx < 0) newIdx = 7;
                 selectSlot(newIdx);
             }, { passive: true });
 
+            // MOUSE
             window.addEventListener('mousemove', e => {
-                if(document.pointerLockElement === document.body) {
-                    targetYaw -= e.movementX * 0.0015;
-                    targetPitch = Math.max(-1.5, Math.min(1.5, targetPitch - e.movementY * 0.0015));
+                if(document.pointerLockElement === document.body && !isChatting) {
+                    targetYaw -= e.movementX * 0.0016;
+                    targetPitch = Math.max(-1.5, Math.min(1.5, targetPitch - e.movementY * 0.0016));
                 }
             });
-
             window.addEventListener('mousedown', e => {
-                if(gamePaused || (!isTouchDevice && document.pointerLockElement !== document.body)) return;
+                if(gamePaused || isChatting || (!isTouchDevice && document.pointerLockElement !== document.body)) return;
                 if(e.button === 0) { isMining = true; mineProgress = 0; swing(); } 
                 else if(e.button === 2) placeBlock(); 
             });
             window.addEventListener('mouseup', e => { if(e.button === 0) stopMining(); });
 
+            // MOBILE
             document.getElementById('m-jump').onclick = e => { e.preventDefault(); jump(); };
             document.getElementById('m-shift').onclick = e => { e.preventDefault(); isShifting = !isShifting; };
             document.getElementById('m-break').ontouchstart = e => { e.preventDefault(); isMining = true; mineProgress = 0; swing(); };
             document.getElementById('m-break').ontouchend = e => { e.preventDefault(); stopMining(); };
             document.getElementById('m-place').onclick = e => { e.preventDefault(); placeBlock(); };
-            document.getElementById('m-chat-toggle').onclick = e => { e.preventDefault(); toggleAIChat(); };
+            document.getElementById('m-chat').onclick = e => { e.preventDefault(); toggleChat(true); };
 
+            // CHAT LOGIC
+            const toggleChat = (show) => {
+                isChatting = show;
+                document.getElementById('ai-chat-overlay').style.display = show ? 'flex' : 'none';
+                if(show) {
+                    moveForward = moveBackward = moveLeft = moveRight = false;
+                    document.getElementById('chat-input').focus();
+                    if(document.pointerLockElement) document.exitPointerLock();
+                } else {
+                    if(!gamePaused && !isTouchDevice) document.body.requestPointerLock();
+                }
+            };
+
+            document.getElementById('close-chat').onclick = () => toggleChat(false);
+            document.getElementById('chat-input').onkeydown = async (e) => {
+                if(e.key === 'Enter') {
+                    const txt = e.target.value.trim(); if(!txt) { toggleChat(false); return; }
+                    const msgBox = document.getElementById('chat-messages');
+                    msgBox.innerHTML += `<div class="msg-user">${txt}</div>`;
+                    e.target.value = ''; msgBox.scrollTop = msgBox.scrollHeight;
+                    const reply = await callGemini(txt);
+                    msgBox.innerHTML += `<div class="msg-bot">${reply}</div>`;
+                    msgBox.scrollTop = msgBox.scrollHeight;
+                }
+            };
+
+            // JOYSTICK
             const jKnob = document.getElementById('joystick-knob');
             let tidJoy = null;
             document.getElementById('joystick').ontouchstart = e => { e.preventDefault(); tidJoy = e.changedTouches[0].identifier; };
             document.getElementById('joystick').ontouchmove = e => {
-                if(tidJoy === null || gamePaused) return;
+                if(tidJoy === null || gamePaused || isChatting) return;
                 for(let t of e.changedTouches) if(t.identifier === tidJoy) {
                     let rect = document.getElementById('joystick').getBoundingClientRect();
                     let dx = t.clientX - (rect.left+60), dy = t.clientY - (rect.top+60);
@@ -530,9 +537,8 @@
             };
             document.getElementById('joystick').ontouchend = () => { tidJoy=null; jKnob.style.transform=''; moveForward=moveBackward=moveLeft=moveRight=false; };
 
-            window.jump = () => { if(canJump) { velocity.y = 8.5; canJump = false; } };
+            window.jump = () => { if(canJump) { velocity.y = 8.8; canJump = false; } };
             window.stopMining = () => { isMining = false; mineTarget = null; crackMesh.visible = false; };
-            
             window.placeBlock = () => {
                 const item = inventory[selectedSlotIndex];
                 if(item.type === 6 && item.count > 0) { 
@@ -543,10 +549,8 @@
                 if(hit && item.type && item.type <= 5 && item.count > 0) {
                     const nx = hit.x + hit.normal.x, ny = hit.y + hit.normal.y, nz = hit.z + hit.normal.z;
                     const pPos = yawObject.position;
-                    const distToPlayer = new THREE.Vector3(nx, ny, nz).distanceTo(new THREE.Vector3(pPos.x, ny, pPos.z));
-                    if(distToPlayer > 0.65 && !hasBlock(nx, ny, nz)) {
-                        setBlock(nx, ny, nz, item.type);
-                        updateInstancedMeshes();
+                    if(new THREE.Vector3(nx, ny, nz).distanceTo(new THREE.Vector3(pPos.x, ny, pPos.z)) > 0.65 && !hasBlock(nx, ny, nz)) {
+                        setBlock(nx, ny, nz, item.type); updateMeshes();
                         item.count--; if(item.count <= 0) item.type = null;
                         renderInventoryUI(); updateHandVisual(item.type); swing();
                     }
@@ -556,120 +560,53 @@
             document.addEventListener('contextmenu', e => e.preventDefault());
         }
 
-        // --- AI CHAT LOGIC ---
-        function setupAIChat() {
-            const input = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('chat-send');
-            const messages = document.getElementById('chat-messages');
-
-            const sendMessage = async () => {
-                const text = input.value.trim();
-                if (!text) return;
-                
-                const userDiv = document.createElement('div');
-                userDiv.className = 'msg-user';
-                userDiv.innerText = text;
-                messages.appendChild(userDiv);
-                input.value = '';
-                messages.scrollTop = messages.scrollHeight;
-
-                const botDiv = document.createElement('div');
-                botDiv.className = 'msg-bot';
-                botDiv.innerHTML = 'Lo spirito sta meditando<span class="loading-dots"></span>';
-                messages.appendChild(botDiv);
-                messages.scrollTop = messages.scrollHeight;
-
-                const response = await callGemini(text);
-                botDiv.innerHTML = response;
-                messages.scrollTop = messages.scrollHeight;
-            };
-
-            sendBtn.onclick = sendMessage;
-            input.onkeydown = e => { if(e.key === 'Enter') sendMessage(); };
-        }
-
-        function toggleAIChat() {
-            const overlay = document.getElementById('ai-chat-overlay');
-            const isVisible = overlay.style.display === 'flex';
-            overlay.style.display = isVisible ? 'none' : 'flex';
-            if (!isVisible) {
-                document.getElementById('chat-input').focus();
-                if (document.pointerLockElement) document.exitPointerLock();
-            } else {
-                if (!isTouchDevice && !gamePaused) document.body.requestPointerLock();
-            }
-        }
-
         // --- UI ---
         function renderInventoryUI() {
-            const invContainer = document.getElementById('inventory');
-            invContainer.innerHTML = '';
+            const invContainer = document.getElementById('inventory'); invContainer.innerHTML = '';
             inventory.forEach((item, index) => {
                 const slot = document.createElement('div');
                 slot.className = `slot ${index === selectedSlotIndex ? 'active' : ''}`;
                 if(item.type && item.type <= 5) {
-                    const blockDiv = document.createElement('div');
-                    blockDiv.className = 'block-preview color-' + item.type;
-                    slot.appendChild(blockDiv);
-                } else {
-                    let icon = '';
-                    if(item.type === 6) icon = '🍎';
-                    if(item.type === 7) icon = '⛏️';
-                    if(item.type === 8) icon = '🪓';
-                    slot.innerText = icon;
+                    const blockDiv = document.createElement('div'); blockDiv.className = 'block-preview color-' + item.type; slot.appendChild(blockDiv);
+                } else if(item.type) {
+                    slot.innerText = item.type === 6 ? '🍎' : (item.type === 7 ? '⛏️' : '🪓');
                 }
                 if (item.count > 1) {
-                    const count = document.createElement('span');
-                    count.className = 'slot-count';
-                    count.innerText = `X${item.count}`;
-                    slot.appendChild(count);
+                    const count = document.createElement('span'); count.className = 'slot-count'; count.innerText = `X${item.count}`; slot.appendChild(count);
                 }
-                const hint = document.createElement('span');
-                hint.className = 'key-hint';
-                hint.innerText = index + 1;
-                slot.appendChild(hint);
-                slot.onclick = () => selectSlot(index);
-                invContainer.appendChild(slot);
+                const hint = document.createElement('span'); hint.className = 'key-hint'; hint.innerText = index + 1; slot.appendChild(hint);
+                slot.onclick = () => selectSlot(index); invContainer.appendChild(slot);
             });
         }
 
-        function selectSlot(idx) {
-            selectedSlotIndex = idx; 
-            renderInventoryUI();
-            updateHandVisual(inventory[idx].type);
-        }
+        function selectSlot(idx) { selectedSlotIndex = idx; renderInventoryUI(); updateHandVisual(inventory[idx].type); }
 
         function updateHandVisual(type) {
             while(handGroup.children.length > 0) handGroup.remove(handGroup.children[0]);
             const hM = new THREE.MeshLambertMaterial({color: 0x5C4033}), tM = new THREE.MeshLambertMaterial({color: 0x888888});
             if(type <= 5 && type !== null) {
                 handGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3), blockMaterials[type]));
-                handGroup.rotation.set(0,0,0);
             } else if(type === 6) {
                 handGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), blockMaterials[6]));
             } else if(type === 7) {
-                const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), hM);
-                handle.rotation.x = -Math.PI/2;
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.12), tM);
-                head.position.set(0,0,-0.3);
-                handGroup.add(handle, head);
+                const h = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), hM); h.rotation.x = -Math.PI/2;
+                const c = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.1), tM); c.position.set(0,0,-0.3);
+                const l = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 0.08), tM); l.position.set(-0.12, 0, -0.3); l.rotation.y = 0.3;
+                const r = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.06, 0.08), tM); r.position.set(0.12, 0, -0.3); r.rotation.y = -0.3;
+                handGroup.add(h, c, l, r);
             } else if(type === 8) {
-                const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), hM);
-                handle.rotation.x = -Math.PI/2;
-                const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.25), tM);
-                blade.position.set(0.06, 0, -0.3);
-                handGroup.add(handle, blade);
+                const h = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), hM); h.rotation.x = -Math.PI/2;
+                const b = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.25), tM); b.position.set(0.06, 0, -0.3); handGroup.add(h, b);
             }
         }
 
-        // --- PHYSICS ---
+        // --- PHYSICS & LOOP ---
         function checkCollision(pos) {
-            const r = PLAYER_RADIUS, h = isShifting ? 1.4 : PLAYER_HEIGHT;
-            const xMin = Math.floor(pos.x-r+0.5), xMax = Math.floor(pos.x+r+0.5);
-            const yMin = Math.floor(pos.y-h+0.5), yMax = Math.floor(pos.y+0.2);
-            const zMin = Math.floor(pos.z-r+0.5), zMax = Math.floor(pos.z+r+0.5);
-            for(let x=xMin; x<=xMax; x++) for(let y=yMin; y<=yMax; y++) for(let z=zMin; z<=zMax; z++)
-                if(hasBlock(x,y,z)) return true;
+            const r = PLAYER_RADIUS, h = isShifting ? 1.3 : PLAYER_HEIGHT;
+            const xM = Math.floor(pos.x-r+0.5), xX = Math.floor(pos.x+r+0.5);
+            const yM = Math.floor(pos.y-h+0.5), yX = Math.floor(pos.y+0.2);
+            const zM = Math.floor(pos.z-r+0.5), zX = Math.floor(pos.z+r+0.5);
+            for(let x=xM; x<=xX; x++) for(let y=yM; y<=yX; y++) for(let z=zM; z<=zX; z++) if(hasBlock(x,y,z)) return true;
             return false;
         }
 
@@ -681,13 +618,13 @@
             const dt = Math.min((time - (window.lt || time))/1000, 0.1); window.lt = time;
 
             if(!gamePaused) {
-                currentYaw += (targetYaw - currentYaw) * 15 * dt;
-                currentPitch += (targetPitch - currentPitch) * 15 * dt;
-                yawObject.rotation.y = currentYaw;
-                pitchObject.rotation.x = currentPitch;
-
-                const targetBobY = isShifting ? -0.25 : 0;
-                bobbingNode.position.y += (targetBobY - bobbingNode.position.y) * 10 * dt;
+                if(!isChatting) {
+                    currentYaw += (targetYaw - currentYaw) * 15 * dt;
+                    currentPitch += (targetPitch - currentPitch) * 15 * dt;
+                    yawObject.rotation.y = currentYaw; pitchObject.rotation.x = currentPitch;
+                }
+                const tBobY = isShifting ? -0.25 : 0;
+                bobbingNode.position.y += (tBobY - bobbingNode.position.y) * 10 * dt;
 
                 checkChunks(yawObject.position.x, yawObject.position.z);
                 handleDropsPickup();
@@ -695,10 +632,7 @@
                 if(window.isSwinging) {
                     window.swingP += dt * 25;
                     if(window.swingP >= Math.PI) { window.isSwinging = false; handGroup.rotation.x = 0; }
-                    else { 
-                        handGroup.rotation.x = -Math.sin(window.swingP)*1.0; 
-                        handGroup.position.z = -0.7 - Math.sin(window.swingP)*0.2; 
-                    }
+                    else { handGroup.rotation.x = -Math.sin(window.swingP)*1.0; handGroup.position.z = -0.7 - Math.sin(window.swingP)*0.2; }
                 }
 
                 if(isMining) {
@@ -708,8 +642,7 @@
                         if(mineTarget !== id) {
                             mineTarget = id; mineProgress = 0;
                             const bType = getBlock(hit.x, hit.y, hit.z);
-                            let sMult = 1; 
-                            const tool = inventory[selectedSlotIndex];
+                            let sMult = 1; const tool = inventory[selectedSlotIndex];
                             if(TOOL_SPEEDS[tool.type] && TOOL_SPEEDS[tool.type].target === BLOCK_PROPS[bType].t) sMult = TOOL_SPEEDS[tool.type].s;
                             requiredTime = BLOCK_PROPS[bType].h / sMult;
                             crackMesh.position.set(hit.x, hit.y, hit.z); crackMesh.visible = true;
@@ -718,11 +651,9 @@
                         const s = Math.floor((mineProgress/requiredTime)*5);
                         if(s>=0 && s<=4) crackMesh.material = crackMaterials[s];
                         if(mineProgress >= requiredTime) { 
-                            const bType = getBlock(hit.x, hit.y, hit.z);
-                            world.delete(id); 
-                            spawnDrop(hit.x, hit.y, hit.z, bType);
-                            updateInstancedMeshes(); 
-                            window.stopMining(); isMining=true; 
+                            const bt = getBlock(hit.x, hit.y, hit.z);
+                            world.delete(id); spawnDrop(hit.x, hit.y, hit.z, bt);
+                            updateMeshes(); window.stopMining(); isMining=true; 
                         }
                     } else window.stopMining();
                 }
@@ -731,11 +662,11 @@
                 if(looked && inventory[selectedSlotIndex].type <= 5 && inventory[selectedSlotIndex].type !== null && !isMining) { window.blockHL.position.set(looked.x, looked.y, looked.z); window.blockHL.visible = true; }
                 else window.blockHL.visible = false;
 
-                const currentMaxSpeed = isShifting ? SHIFT_SPEED : WALK_SPEED;
+                const cSpeed = isShifting ? SHIFT_SPEED : WALK_SPEED;
                 let dir = new THREE.Vector3(Number(moveRight)-Number(moveLeft), 0, Number(moveBackward)-Number(moveForward)).normalize();
                 dir.applyEuler(new THREE.Euler(0, currentYaw, 0));
-                velocity.x += (dir.x * currentMaxSpeed - velocity.x) * 15 * dt;
-                velocity.z += (dir.z * currentMaxSpeed - velocity.z) * 15 * dt;
+                velocity.x += (dir.x * cSpeed - velocity.x) * 15 * dt;
+                velocity.z += (dir.z * cSpeed - velocity.z) * 15 * dt;
                 velocity.y -= 26 * dt; 
 
                 const p = yawObject.position;
@@ -748,8 +679,7 @@
                     velocity.y = 0;
                 } else canJump = false;
                 lastVelY = velocity.y;
-                if(p.y < -30) { p.set(0,20,0); velocity.set(0,0,0); takeDamage(5); }
-                
+                if(p.y < -30) { spawnPlayer(); takeDamage(5); velocity.set(0,0,0); }
                 if(dir.lengthSq()>0.1 && canJump) foodTimer += dt;
                 if(foodTimer > 25) { food = Math.max(0, food - 1); foodTimer = 0; updateHUD(); }
             }
@@ -767,8 +697,7 @@
             health = Math.max(0, health - amt);
             document.getElementById('damage-overlay').style.opacity = '0.5';
             setTimeout(() => document.getElementById('damage-overlay').style.opacity = '0', 200);
-            updateHUD();
-            if(health <= 0) location.reload();
+            updateHUD(); if(health <= 0) location.reload();
         }
 
         function spawnPlayer() {
